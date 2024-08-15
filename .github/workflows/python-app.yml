@@ -1,0 +1,59 @@
+name: Python application
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - '.*'
+      - 'Dockerfile'
+      - 'Makefile'
+      - '*.png'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - '.*'
+      - 'Dockerfile'
+      - 'Makefile'
+      - '*.png'
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+    CHROMA_CLIENT_AUTHN_CREDENTIALS: ${{ secrets.CHROMA_CLIENT_AUTHN_CREDENTIALS }}
+    CHROMA_CLIENT_AUTHN_PROVIDER: ${{ secrets.CHROMA_CLIENT_AUTHN_PROVIDER }}
+    CHROMA_AUTH_TOKEN_TRANSPORT_HEADER: ${{ secrets.CHROMA_AUTH_TOKEN_TRANSPORT_HEADER }}
+    CHROMA_SERVER_AUTHN_CREDENTIALS: ${{ secrets.CHROMA_SERVER_AUTHN_CREDENTIALS }}
+    CHROMA_SERVER_AUTHN_PROVIDER: ${{ secrets.CHROMA_SERVER_AUTHN_PROVIDER }}
+
+jobs:
+  continuous-integration:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Restore virtual env # test cache
+      uses: syphar/restore-virtualenv@v1
+      id: cache-virtualenv
+    
+    - name: Restore pip downloads
+      uses: syphar/restore-pip-download-cache@v1
+      if: steps.cache-virtualenv.outputs.cache-hit != 'true'
+    
+    # the package installation will only be executed when the
+    # requirements-files have changed.
+    - run: pip install -r requirements.txt
+      if: steps.cache-virtualenv.outputs.cache-hit != 'true'
+
+    - name: Test with pytest
+      run: |
+        pytest
