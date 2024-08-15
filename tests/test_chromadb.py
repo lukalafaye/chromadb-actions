@@ -5,7 +5,7 @@ import subprocess
 import os 
 import time
 
-from ..src.launch import connect_to_chromadb
+from src.launch import connect_to_chromadb
 
 @pytest.fixture(scope="module")
 def setup_docker_container():
